@@ -10,6 +10,7 @@ function App() {
   const [draggingId, setDraggingId] = useState(null); // 현재 드래그 중인 도형 ID
   const [draggingType, setDraggingType] = useState(null); // 'rect' 또는 'line'
   const [offset, setOffset] = useState({ x: 0, y: 0 }); // 마우스와 도형의 위치 차이
+  const [selectedId, setSelectedId] = useState(null); // 선택된 도형 ID
 
   // 서버로부터 초기 데이터, 갱신 데이터 수신
   useEffect(() => {
@@ -65,6 +66,14 @@ function App() {
     socket.emit('update', newShapes); // 서버에 전송 → 다른 사용자에게 브로드캐스트
   };
 
+  // 선택된 도형 삭제
+  const deleteSelected = () => {
+    if (selectedId === null) return;
+    const newShapes = shapes.filter(s => s.id !== selectedId);
+    updateShapes(newShapes);
+    setSelectedId(null);
+  };
+
   // 선 클릭 여부 확인
   const isPointNearLine = (x, y, x1, y1, x2, y2, threshold = 5) => {
     const A = x - x1;
@@ -111,6 +120,7 @@ function App() {
       setDraggingId(rectShape.id);
       setDraggingType('rect');
       setOffset({ x: x - rectShape.x, y: y - rectShape.y });
+      setSelectedId(rectShape.id); // ✅ 선택된 도형 ID 저장
       return;
     }
 
@@ -123,7 +133,12 @@ function App() {
       setDraggingId(lineShape.id);
       setDraggingType('line');
       setOffset({ x, y }); // 선은 절대 좌표 오프셋
+      setSelectedId(lineShape.id); // ✅ 선택된 도형 ID 저장
+      return;
     }
+
+    // ✅ 아무 도형도 클릭되지 않았으면 선택 취소
+    setSelectedId(null);
   };
 
   const onMouseMove = (e) => {
@@ -172,6 +187,7 @@ function App() {
       <h1>Real-time Diagram Editor</h1>
       <button onClick={addRect}>사각형 추가</button>
       <button onClick={addLine}>선 추가</button>
+      <button onClick={deleteSelected} disabled={selectedId === null}>선택된 도형 삭제</button>
       <canvas
         ref={canvasRef}
         width={800}
