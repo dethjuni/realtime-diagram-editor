@@ -8,6 +8,7 @@ function App() {
   const canvasRef = useRef(null); // 캔버스 DOM 참조
   const [shapes, setShapes] = useState([]); // 다이어그램의 도형 상태
   const [draggingId, setDraggingId] = useState(null); // 현재 드래그 중인 도형 ID
+  const [draggingType, setDraggingType] = useState(null); // 'rect' 또는 'line'
   const [offset, setOffset] = useState({ x: 0, y: 0 }); // 마우스와 도형의 위치 차이
 
   // 서버로부터 초기 데이터, 갱신 데이터 수신
@@ -64,43 +65,106 @@ function App() {
     socket.emit('update', newShapes); // 서버에 전송 → 다른 사용자에게 브로드캐스트
   };
 
+  // 선 클릭 여부 확인
+  const isPointNearLine = (x, y, x1, y1, x2, y2, threshold = 5) => {
+    const A = x - x1;
+    const B = y - y1;
+    const C = x2 - x1;
+    const D = y2 - y1;
+
+    const dot = A * C + B * D;
+    const lenSq = C * C + D * D;
+    let param = -1;
+    if (lenSq !== 0) param = dot / lenSq;
+
+    let xx, yy;
+    if (param < 0) {
+      xx = x1;
+      yy = y1;
+    } else if (param > 1) {
+      xx = x2;
+      yy = y2;
+    } else {
+      xx = x1 + param * C;
+      yy = y1 + param * D;
+    }
+
+    const dx = x - xx;
+    const dy = y - yy;
+    return Math.sqrt(dx * dx + dy * dy) < threshold;
+  };
+
   // 마우스 누를 때 드래그할 도형 결정
   const onMouseDown = (e) => {
     const rect = canvasRef.current.getBoundingClientRect();
     const x = e.clientX - rect.left;
     const y = e.clientY - rect.top;
 
-    // 클릭한 좌표에 있는 사각형 찾기
-    const shape = shapes.find(s =>
+    // 클릭한 좌표에 있는 사각형부터 찾기
+    const rectShape = shapes.find(s =>
       s.type === 'rect' &&
       x >= s.x && x <= s.x + s.w &&
       y >= s.y && y <= s.y + s.h
     );
 
-    if (shape) {
-      setDraggingId(shape.id); // 드래그 중인 도형 설정
-      setOffset({ x: x - shape.x, y: y - shape.y }); // 마우스 위치 오프셋 계산
+    if (rectShape) {
+      setDraggingId(rectShape.id);
+      setDraggingType('rect');
+      setOffset({ x: x - rectShape.x, y: y - rectShape.y });
+      return;
+    }
+
+    // 선 체크
+    const lineShape = shapes.find(s =>
+      s.type === 'line' && isPointNearLine(x, y, s.x1, s.y1, s.x2, s.y2)
+    );
+
+    if (lineShape) {
+      setDraggingId(lineShape.id);
+      setDraggingType('line');
+      setOffset({ x, y }); // 선은 절대 좌표 오프셋
     }
   };
 
-  // 마우스 움직일 때 도형 위치 변경
   const onMouseMove = (e) => {
     if (!draggingId) return;
 
     const rect = canvasRef.current.getBoundingClientRect();
-    const x = e.clientX - rect.left - offset.x;
-    const y = e.clientY - rect.top - offset.y;
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
 
-    // 해당 도형 위치 갱신
-    const newShapes = shapes.map(s => 
-      s.id === draggingId ? { ...s, x, y } : s
-    );
+    const dx = x - offset.x;
+    const dy = y - offset.y;
+
+    const newShapes = shapes.map(s => {
+      if (s.id !== draggingId) return s;
+
+      if (draggingType === 'rect') {
+        return { ...s, x: x - offset.x, y: y - offset.y };
+      } else if (draggingType === 'line') {
+        return {
+          ...s,
+          x1: s.x1 + dx,
+          y1: s.y1 + dy,
+          x2: s.x2 + dx,
+          y2: s.y2 + dy
+        };
+      } else {
+        return s;
+      }
+    });
+
     updateShapes(newShapes);
+
+    if (draggingType === 'line') {
+      setOffset({ x, y });
+    }
   };
 
   // 마우스 놓으면 드래그 해제
   const onMouseUp = () => {
     setDraggingId(null);
+    setDraggingType(null);
   };
 
   return (
