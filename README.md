@@ -34,11 +34,13 @@ React 앱은 기본적으로 http://localhost:3000 에서 실행됩니다.
 - 새로고침 및 재접속 시 상태 유지
 
 ## 📂 프로젝트 구조
+```
 realtime-diagram-editor/
 ├── client/         # React 애플리케이션
 ├── server/         # Node.js + Socket.io 서버
 ├── README.md       # 본 문서
 ├── DESIGN.md       # 설계 문서
+```
 
 ## 💡 개선 및 추가 기능 (선택)
 - 서버 다이어그램 상태 JSON 파일 저장 기능

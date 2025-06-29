@@ -9,9 +9,11 @@ React를 기반으로 한 클라이언트와 Node.js (Express + Socket.io)를 �
 
 ## 2. 아키텍처 다이어그램 (텍스트 기반)
 -----------------------------------
+```
 클라이언트 (React 앱, 브라우저)
     └──> WebSocket(Socket.io) ────────> 서버 (Node.js + Express + Socket.io)
                                               └─ in-memory diagram state
+```
 
 [ 사용자는 React 기반 웹 페이지를 통해 다이어그램을 조작하고,  
   클라이언트는 WebSocket을 통해 서버에 변경 사항을 전송하며,  
@@ -57,12 +59,14 @@ React를 기반으로 한 클라이언트와 Node.js (Express + Socket.io)를 �
 --------------
 diagramState (서버 메모리, JSON 형태)
 예:
+```
 {
   "elements": [
     { "id": 1, "type": "rectangle", "x": 100, "y": 150, "width": 80, "height": 40 },
     { "id": 2, "type": "line", "x1": 100, "y1": 150, "x2": 200, "y2": 250 }
   ]
 }
+```
 
 각 요소에는 고유 ID가 있으며, 클라이언트와 서버는 이 ID를 기반으로 요소를 관리합니다.
 
