@@ -14,3 +14,6 @@ yarn-error.log*
 
 # coverage reports (uncomment if using test coverage)
 /coverage
+
+# misc
+diagram-state.json
