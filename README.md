@@ -13,15 +13,19 @@
 ## ⚙ 실행 방법
 
 ### 1️⃣ 서버 실행 (bash)
+```
 cd server
 npm install
 node index.js
+```
 서버는 http://localhost:4000 에서 실행됩니다.
 
 ### 2️⃣ 클라이언트 실행 (bash)
+```
 cd client
 npm install
 npm start
+```
 React 앱은 기본적으로 http://localhost:3000 에서 실행됩니다.
 
 
